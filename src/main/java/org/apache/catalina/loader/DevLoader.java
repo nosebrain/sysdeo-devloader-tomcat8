@@ -40,7 +40,7 @@ public class DevLoader extends WebappLoader {
 	/**
 	 * @param parent the parent class loader
 	 */
-	public DevLoader(ClassLoader parent) {
+	public DevLoader(final ClassLoader parent) {
 		super(parent);
 	}
 	
@@ -48,7 +48,7 @@ public class DevLoader extends WebappLoader {
 	 * @see org.apache.catalina.Lifecycle#start()
 	 */
 	@Override
-	public void start() throws LifecycleException {
+	public void startInternal() throws LifecycleException {
 		log.debug("Starting DevLoader");
 		
 		/*
@@ -57,7 +57,7 @@ public class DevLoader extends WebappLoader {
 		this.setLoaderClass("org.apache.catalina.loader.ModWebappClassLoader");
 		
 		// create the class loader
-		super.start();
+		super.startInternal();
 		
 		final WebappClassLoader devCl = (WebappClassLoader) super.getClassLoader();
 		
@@ -74,7 +74,7 @@ public class DevLoader extends WebappLoader {
 					final URL url = classPathDir.toURI().toURL();
 					devCl.addRepository(url.toString());
 					classpath.append(classPathDir.toString() + File.pathSeparatorChar);
-				} catch (MalformedURLException e) {
+				} catch (final MalformedURLException e) {
 					log.error(entry + " invalid (MalformedURL)");
 				}
 			} else {

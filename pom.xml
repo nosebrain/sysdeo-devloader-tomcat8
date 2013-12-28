@@ -2,14 +2,14 @@
 	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>org.bibsonomy</groupId>
-	<artifactId>tomcat6-devloader</artifactId>
+	<artifactId>tomcat7-devloader</artifactId>
 	<version>0.0.1-SNAPSHOT</version>
 
 	<dependencies>
 		<dependency>
-			<groupId>org.apache.tomcat</groupId>
+			<groupId>org.apache.geronimo.ext.tomcat</groupId>
 			<artifactId>catalina</artifactId>
-			<version>6.0.26</version>
+			<version>7.0.27.1</version>
 			<scope>provided</scope>
 		</dependency>
 		<dependency>

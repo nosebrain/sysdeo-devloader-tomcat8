@@ -1,5 +1,6 @@
 package org.apache.catalina.loader;
 
+
 import java.io.File;
 import java.io.IOException;
 import java.net.MalformedURLException;
@@ -8,22 +9,26 @@ import java.net.URLClassLoader;
 import java.net.URLStreamHandlerFactory;
 import java.util.Enumeration;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+
 /**
  * @author dzo
  */
 public class ModWebappClassLoader extends WebappClassLoader {
-
+	private static final Log log = LogFactory.getLog(ModWebappClassLoader.class);
+	
 	private static class URLClassLoaderAdapter extends URLClassLoader {
 
-		public URLClassLoaderAdapter(URL[] urls) {
+		public URLClassLoaderAdapter(final URL[] urls) {
 			super(urls);
 		}
 
-		public URLClassLoaderAdapter(URL[] urls, ClassLoader parent) {
+		public URLClassLoaderAdapter(final URL[] urls, final ClassLoader parent) {
 			super(urls, parent);
 		}
 
-		public URLClassLoaderAdapter(URL[] urls, ClassLoader parent, URLStreamHandlerFactory factory) {
+		public URLClassLoaderAdapter(final URL[] urls, final ClassLoader parent, final URLStreamHandlerFactory factory) {
 			super(urls, parent, factory);
 		}
 		
@@ -33,7 +38,7 @@ public class ModWebappClassLoader extends WebappClassLoader {
 		 * @see java.net.URLClassLoader#addURL(java.net.URL)
 		 */
 		@Override
-		public void addURL(URL url) {
+		public void addURL(final URL url) {
 			// just make the method public!
 			super.addURL(url);
 		}
@@ -52,7 +57,7 @@ public class ModWebappClassLoader extends WebappClassLoader {
 	/**
 	 * @param parent
 	 */
-	public ModWebappClassLoader(ClassLoader parent) {
+	public ModWebappClassLoader(final ClassLoader parent) {
 		super(parent);
 		loader = new URLClassLoaderAdapter(new URL[0], parent);
 	}
@@ -65,7 +70,7 @@ public class ModWebappClassLoader extends WebappClassLoader {
 	 * String, java.io.File)
 	 */
 	@Override
-	synchronized void addRepository(String repository, File file) {
+	synchronized void addRepository(final String repository, final File file) {
 		/*
 		 * don't add classes dir to use uptodate class files from output dir of e.g. eclipse
 		 */
@@ -83,7 +88,7 @@ public class ModWebappClassLoader extends WebappClassLoader {
 	 * String, java.io.File)
 	 */
 	@Override
-	public void addRepository(String repository) {
+	public void addRepository(final String repository) {
 		super.addRepository(repository);
 		
 		log.debug("added " + repository);
@@ -103,13 +108,12 @@ public class ModWebappClassLoader extends WebappClassLoader {
 	 * org.apache.catalina.loader.WebappClassLoader#findResourceInternal(java
 	 * .lang.String, java.lang.String)
 	 */
-	@SuppressWarnings("unchecked") // parent's fault
 	@Override
 	protected ResourceEntry findResourceInternal(final String name, final String path) {
 		/*
 		 * 1) check the cache
 		 */
-		final ResourceEntry cachedEntry = (ResourceEntry) resourceEntries.get(name);
+		final ResourceEntry cachedEntry = resourceEntries.get(name);
 		if (cachedEntry != null) {
 			return cachedEntry;
 		}
@@ -126,7 +130,7 @@ public class ModWebappClassLoader extends WebappClassLoader {
 			 * found insert into cache
 			 */
 			synchronized (resourceEntries) {
-				final ResourceEntry cacheEntry = (ResourceEntry) resourceEntries.get(name);
+				final ResourceEntry cacheEntry = resourceEntries.get(name);
 				if (cacheEntry == null) {
 					resourceEntries.put(name, entry);
 				} else {
@@ -146,7 +150,7 @@ public class ModWebappClassLoader extends WebappClassLoader {
 	 * @see org.apache.catalina.loader.WebappClassLoader#findResources(java.lang.String)
 	 */
 	@Override
-	public Enumeration<?> findResources(String name) throws IOException {
+	public Enumeration<URL> findResources(final String name) throws IOException {
 		final Enumeration<URL> foundResources = this.loader.findResources(name);
 		
 		if (foundResources != null && foundResources.hasMoreElements()) {
@@ -155,6 +159,4 @@ public class ModWebappClassLoader extends WebappClassLoader {
 		
 		return super.findResources(name);
 	}
-	
-	
 }
