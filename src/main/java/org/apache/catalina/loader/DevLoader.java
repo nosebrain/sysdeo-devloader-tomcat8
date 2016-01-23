@@ -5,17 +5,17 @@ import java.io.FileFilter;
 import java.io.FileReader;
 import java.io.IOException;
 import java.io.LineNumberReader;
-import java.net.MalformedURLException;
-import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.StringTokenizer;
 
 import javax.servlet.ServletContext;
 
-import org.apache.catalina.Context;
 import org.apache.catalina.Globals;
 import org.apache.catalina.LifecycleException;
+import org.apache.catalina.WebResourceRoot;
+import org.apache.catalina.WebResourceSet;
+import org.apache.catalina.webresources.DirResourceSet;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
@@ -31,11 +31,11 @@ public class DevLoader extends WebappLoader {
 	private static final String tomcatPluginFile = ".tomcatplugin";
 	
 	/**
-	 * default contructor
+	 * default constructor
 	 */
 	public DevLoader() {
 		super();
-	}	
+	}
 	
 	/**
 	 * @param parent the parent class loader
@@ -51,18 +51,14 @@ public class DevLoader extends WebappLoader {
 	public void startInternal() throws LifecycleException {
 		log.debug("Starting DevLoader");
 		
-		/*
-		 * use our own class loader
-		 */
-		this.setLoaderClass("org.apache.catalina.loader.ModWebappClassLoader");
-		
 		// create the class loader
 		super.startInternal();
 		
 		final WebappClassLoader devCl = (WebappClassLoader) super.getClassLoader();
+		final WebResourceRoot resourceRoot = devCl.getResources();
 		
-		final List<String> webClassPathEntries = readWebClassPathEntries();
-		final StringBuffer classpath = new StringBuffer();
+		final List<String> webClassPathEntries = this.readWebClassPathEntries();
+		final StringBuilder classpath = new StringBuilder();
 		for (final String entry : webClassPathEntries) {
 			File classPathDir = new File(entry);
 			if (classPathDir.exists()) {
@@ -70,13 +66,9 @@ public class DevLoader extends WebappLoader {
 				if (classPathDir.isDirectory() && !entry.endsWith("/")) {
 					classPathDir = new File(entry + "/");
 				}
-				try {
-					final URL url = classPathDir.toURI().toURL();
-					devCl.addRepository(url.toString());
-					classpath.append(classPathDir.toString() + File.pathSeparatorChar);
-				} catch (final MalformedURLException e) {
-					log.error(entry + " invalid (MalformedURL)");
-				}
+				final WebResourceSet webResourceSet = new DirResourceSet(resourceRoot, "/WEB-INF/classes/", classPathDir.getAbsolutePath(), "/");
+				resourceRoot.addPreResources(webResourceSet);
+				classpath.append(classPathDir.toString() + File.pathSeparatorChar);
 			} else {
 				log.error(entry + " does not exist !");
 			}
@@ -86,7 +78,7 @@ public class DevLoader extends WebappLoader {
 		final StringTokenizer tokenizer = new StringTokenizer(cp, String.valueOf(File.pathSeparatorChar));
 		while (tokenizer.hasMoreTokens()) {
 			String token = tokenizer.nextToken();
-			// only on windows 
+			// only on windows
 			if ((token.charAt(0) == '/') && (token.charAt(2)==':')) {
 				token = token.substring(1);
 			}
@@ -97,15 +89,15 @@ public class DevLoader extends WebappLoader {
 		log.debug("JSPCompiler Classpath = " + classpath);
 	}
 	
-	protected List<String> readWebClassPathEntries() {				
-		final File prjDir = getProjectRootDir();
+	protected List<String> readWebClassPathEntries() {
+		final File prjDir = this.getProjectRootDir();
 		if (prjDir == null) {
 			return new ArrayList<String>();
 		}
 		
 		log.debug("projectdir = " + prjDir.getAbsolutePath());
 
-		final List<String> rc = loadWebClassPathFile(prjDir);
+		final List<String> rc = this.loadWebClassPathFile(prjDir);
 		
 		if (rc == null) {
 			// should not happen!
@@ -115,8 +107,9 @@ public class DevLoader extends WebappLoader {
 	}
 	
 	protected File getProjectRootDir() {
-		File rootDir = getWebappDir();
+		File rootDir = this.getWebappDir();
 		final FileFilter filter = new FileFilter() {
+			@Override
 			public boolean accept(final File file) {
 				return (file.getName().equalsIgnoreCase(webClassPathFile) ||
 				        file.getName().equalsIgnoreCase(tomcatPluginFile));
@@ -124,7 +117,7 @@ public class DevLoader extends WebappLoader {
 		};
 		while (rootDir != null) {
 			final File[] files = rootDir.listFiles(filter);
-			if (files != null && files.length >= 1) {
+			if ((files != null) && (files.length >= 1)) {
 				return files[0].getParentFile();
 			}
 			rootDir = rootDir.getParentFile();
@@ -134,7 +127,7 @@ public class DevLoader extends WebappLoader {
 	
 	protected List<String> loadWebClassPathFile(final File prjDir) {
 		final File cpFile = new File(prjDir, webClassPathFile);
-		if (cpFile.exists()) {			
+		if (cpFile.exists()) {
 			FileReader reader = null;
 			try {
 				final List<String> rc = new ArrayList<String>();
@@ -146,6 +139,7 @@ public class DevLoader extends WebappLoader {
 					line = line.replace('\\', '/');
 					rc.add(line);
 				}
+				lr.close();
 				return rc;
 			} catch (final IOException ioEx) {
 				if (reader != null) {
@@ -155,18 +149,17 @@ public class DevLoader extends WebappLoader {
 						// ignore
 					}
 				}
-					
 				return null;
-			}			
+			}
 		}
 		return null;
 	}
 	
 	protected ServletContext getServletContext() {
-		return ((Context) getContainer()).getServletContext();
+	  return this.getContext().getServletContext();
 	}
 	
-	protected File getWebappDir() {		
-		return new File(getServletContext().getRealPath("/"));
+	protected File getWebappDir() {
+		return new File(this.getServletContext().getRealPath("/"));
 	}
 }
