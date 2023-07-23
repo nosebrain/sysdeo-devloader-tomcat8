@@ -5,7 +5,7 @@
 	<artifactId>tomcat8-devloader</artifactId>
 	<version>1.0.0-SNAPSHOT</version>
 	<properties>
-		<tomcat.version>8.0.30</tomcat.version>
+		<tomcat.version>8.5.63</tomcat.version>
 	</properties>
 	<dependencies>
 		<dependency>
